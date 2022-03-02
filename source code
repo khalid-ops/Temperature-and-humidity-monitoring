@@ -1,0 +1,70 @@
+#include<ESP8266WiFi.h>
+#include<DHT.h>
+#include<ESP8266HTTPClient.h>
+
+DHT dht(D5, DHT11);
+#define tled D3
+#define hled D6
+
+WiFiClient client;
+WiFiServer server(80);
+
+String host = "api.thingspeak.com";
+int httpport_no = 80;
+String url1 = "/update?api_key=EVEWTZ2XGXM9DV4V&field1=";
+String url2 = "/update?api_key=EVEWTZ2XGXM9DV4V&field2=";
+
+HTTPClient http;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  WiFi.begin("i-ball baton", "19661966");
+  while(WiFi.status() != WL_CONNECTED){
+        delay(200);
+    Serial.println("..");
+  }
+  Serial.println();
+  Serial.println("WiFi connected");
+  Serial.println(WiFi.localIP());
+  dht.begin();
+  server.begin();
+  pinMode(D3, OUTPUT);
+  pinMode(D6, OUTPUT);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+float t = dht.readTemperature();
+float h = dht.readHumidity();
+Serial.println("Temperature: " + (String)t);
+Serial.println("Humidity: " + (String)h);
+
+if(t > 25){
+  digitalWrite(tled, HIGH);
+}
+else{
+  digitalWrite(tled, LOW);
+}
+
+if(h > 40){
+  digitalWrite(hled, HIGH);
+}
+else{
+  digitalWrite(hled, LOW);
+}
+
+url1 = url1 + (String) t;
+http.begin(client,host,httpport_no,url1);
+int httpCode = http.GET();
+Serial.println(httpCode);
+delay(1000);
+
+url2 = url2 + (String) h;
+http.begin(client,host,httpport_no,url2);
+httpCode = http.GET();
+Serial.println(httpCode);
+delay(1000);
+
+
+}
